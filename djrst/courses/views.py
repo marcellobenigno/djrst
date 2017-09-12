@@ -1,11 +1,9 @@
-from rest_framework import generics
-from django.shortcuts import render, get_object_or_404
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from django.shortcuts import render
+from rest_framework import generics, viewsets
 
 from . import serializers
-from .models import Course
+from .models import Course, Review
 
 
 def list_(resquest):
@@ -24,14 +22,45 @@ def detail(request, pk):
     return render(request, 'courses/detail.html', context)
 
 
-class ListCreateCourse(APIView):
-    def get(self, request, format=None):
-        courses = Course.objects.all()
-        serializer = serializers.CourseSerializer(courses, many=True)
-        return Response(serializer.data)
+class ListCreateCourse(generics.ListCreateAPIView):
+    queryset = Course.objects.all()
+    serializer_class = serializers.CourseSerializer
 
-    def post(self, request, format=None):
-        serializer = serializers.CourseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class RetrieveUpdateDestroyCourse(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+
+
+class ListCreateReview(generics.ListCreateAPIView):
+    queryset = Review.objects.all()
+    serializer_class = serializers.ReviewSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(course_id=self.kwargs.get('course_pk'))
+
+    def perform_create(self, serializer):
+        course = get_object_or_404(Course, pk=self.kwargs.get('course_pk'))
+        serializer.save(course=course)
+
+
+class RetrieveUpdateDestroyReview(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = serializers.ReviewSerializer
+
+    def get_object(self):
+        return get_object_or_404(
+            self.get_queryset(),
+            course_id=self.kwargs.get('course_pk'),
+            pk=self.kwargs.get('course_pk')
+        )
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = serializers.ReviewSerializer
