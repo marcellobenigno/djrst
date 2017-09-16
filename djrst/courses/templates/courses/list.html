@@ -6,7 +6,7 @@
             <h1>Nossos Cursos</h1>
             <hr>
             {% for course in courses %}
-                <h4><a href="{% url 'courses:detail' course.pk %}">{{ course.title }}</a></h4><br>
+                <h4><a href="{% url 'courses_list:detail' course.pk %}">{{ course.title }}</a></h4><br>
             {% endfor %}
         </div>
     </div>

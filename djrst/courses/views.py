@@ -1,6 +1,9 @@
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from rest_framework import generics, viewsets
+from rest_framework.decorators import detail_route
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from . import serializers
 from .models import Course, Review
@@ -52,15 +55,26 @@ class RetrieveUpdateDestroyReview(generics.RetrieveUpdateDestroyAPIView):
         return get_object_or_404(
             self.get_queryset(),
             course_id=self.kwargs.get('course_pk'),
-            pk=self.kwargs.get('course_pk')
+            pk=self.kwargs.get('pk')
         )
 
 
 class CourseViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
     queryset = Course.objects.all()
     serializer_class = serializers.CourseSerializer
 
+    # detalhe da url:
+    # v2/cursos/1/avaliacoes/
+    @detail_route(methods=['get', 'post', 'put'])
+    def avaliacoes(self, request, pk=None):
+        course = self.get_object()
+        serializer = serializers.ReviewSerializer(
+            course.reviews.all(), many=True)
+        return Response(serializer.data)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
     queryset = Review.objects.all()
     serializer_class = serializers.ReviewSerializer
